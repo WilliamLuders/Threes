@@ -13,10 +13,13 @@ namespace Threes
         private const int boardSize = Constants.boardSize;
         private int[,] boardTiles = new int[boardSize, boardSize];
 
+        public int[,] BoardTiles { get => boardTiles; }
+
         public Board()
         {
             boardTiles = InitializeBoard();
         }
+        public int[,] GetBoard() => boardTiles;
 
         public void MoveTiles(int dir)
         {
@@ -70,14 +73,14 @@ namespace Threes
             Random rndGen = new Random();
 
             //fill up to 1/3 of the board worth of tiles
-            int numTiles = rndGen.Next(1, boardSize * boardSize / 3);
+            int numTiles = rndGen.Next(1, (boardSize * boardSize) / 3+1);
             for (int i = 0; i<numTiles; i++)
             {
                 // keep generating coordinates until we find a blank square
                 do
                 {
-                    x = rndGen.Next(1, boardSize);
-                    y = rndGen.Next(1, boardSize);
+                    x = rndGen.Next(0, boardSize);
+                    y = rndGen.Next(0, boardSize);
                 } while (tempBoard[x, y] != 0);
                 //place random value at this empty square
                 tempBoard[x, y] = rndGen.Next(1, 3); // need to update to allow spawning 6s, 12, 24s etc.
