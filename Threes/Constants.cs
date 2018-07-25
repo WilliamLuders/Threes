@@ -9,7 +9,7 @@ namespace Threes
 {
     static class Constants
     {
-        public const int boardSize = 4;
+        public const int boardSize = 5;
         public enum DIRS { UP = 1, DOWN, RIGHT, LEFT };
         public const bool ROW = false;
         public const bool COL = true;

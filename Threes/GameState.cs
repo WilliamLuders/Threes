@@ -3,20 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace Threes
 {
-    public class GameState
+    public class GameState : INotifyPropertyChanged
     {
         //Fields
         private int score;
+        public event PropertyChangedEventHandler PropertyChanged;
+
         //public int size; // IDEA: dynamic array size depending on progression through single game/achievements
         //private Board gameBoard;
         //Fields
         private const int boardSize = Constants.boardSize;
-        public int[,] boardTiles = new int[boardSize, boardSize];
+        private int[,] boardTiles = new int[boardSize, boardSize];
 
-        public int[,] BoardTiles { get => boardTiles; }
+        public int[,] BoardTiles {
+            get => boardTiles;
+        }
 
         public GameState()
         {
@@ -25,70 +30,117 @@ namespace Threes
             
         }
         public int Score { get => score; }
-        public int[,] GetBoard() => boardTiles;
+        //public int[,] GetBoard() => boardTiles;
 
-        public void MoveTiles(int dir)
+        public bool MoveTiles(int dir)
         {
             //iterate over rows/cols, checking if any have valid moves
             //if any have valid moves, specify transition behaviour
             //perform those moves
             //check if deadlock occurs after move, end game if so
 
-            //int[][] vectors = new int[boardSize][]; // array of arrays makes board merge operations invariant on merge direction
+            int[][] vectors = new int[boardSize][]; // array of arrays makes board merge operations invariant on merge direction
+            for(int i = 0; i<boardSize; i++)
+            {
+                vectors[i] = new int[boardSize];
+            }
             bool rowcol;
             bool posneg;
+            bool moveOccurred = false;
 
             switch (dir)
             {
-                case 1: // UP
+                case (int)Constants.DIRS.UP:
                     rowcol = Constants.COL;
                     posneg = Constants.NEGDIR;
                     break;
-                case 2: // DOWN
+                case (int)Constants.DIRS.DOWN:
                     rowcol = Constants.COL;
                     posneg = Constants.POSDIR;
                     break;
-                case 3: // RIGHT
+                case (int)Constants.DIRS.RIGHT:
                     rowcol = Constants.ROW;
                     posneg = Constants.POSDIR;
                     break;
-                case 4: // LEFT
+                case (int)Constants.DIRS.LEFT:
                     rowcol = Constants.ROW;
                     posneg = Constants.NEGDIR;
                     break;
-                default:
-                    return;
+                default: // default should never occur, just need one to make compiler happy
+                    rowcol = Constants.ROW;
+                    posneg = Constants.NEGDIR;
+                    break; 
             }
             for (int i = 0; i < boardSize; i++)
             {
-                //vectors[i] = ReadVector(i, rowcol, posneg);
-                WriteVector(i, rowcol, posneg, Merge(ReadVector(i, rowcol, posneg)));
+                ReadVector(i, rowcol, posneg, vectors[i]);
+                if (Merge(vectors[i])) moveOccurred = true ;
+                WriteVector(i, rowcol, posneg, vectors[i]);
             }
             //call merge on these vectors, merge returns transition vector - not bool (all zeros except for position of merge)
             for (int i = 0; i < boardSize; i++)
             {
                 //Merge
             }
+
+            //inform view that new board is available
+            OnPropertyChanged("BoardTiles");
+            return moveOccurred;
         }
-
-        private int[] ReadVector(int index, bool rowcol, bool posneg)
+        public void SpawnTile(int dir)
         {
-            int[] vector = new int[boardSize];
+            int i;
+            Random rndGen = new Random();
 
+            switch (dir)
+            {
+                case (int)Constants.DIRS.UP:
+                    // keep generating coordinates until we find a blank square along specific edge
+                    do
+                    {
+                        i = rndGen.Next(0, boardSize);
+                    } while (boardTiles[boardSize - 1, i] != 0); // pick empty square along bottom
+                    boardTiles[boardSize - 1, i] = rndGen.Next(1, 4);
+                    break;
+                case (int)Constants.DIRS.DOWN:
+                    do
+                    {
+                        i = rndGen.Next(0, boardSize);
+                    } while (boardTiles[0, i] != 0); // pick empty square along top
+                    boardTiles[0, i] = rndGen.Next(1, 4);
+                    break;
+                case (int)Constants.DIRS.LEFT:
+                    do
+                    {
+                        i = rndGen.Next(0, boardSize);
+                    } while (boardTiles[i, boardSize - 1] != 0); // pick empty square along right
+                    boardTiles[i, boardSize - 1] = rndGen.Next(1, 4);
+                    break;
+                case (int)Constants.DIRS.RIGHT:
+                    do
+                    {
+                        i = rndGen.Next(0, boardSize);
+                    } while (boardTiles[i, 0] != 0); // pick empty square along left
+                    boardTiles[i, 0] = rndGen.Next(1, 4);
+                    break;
+            }
+        }
+        private void ReadVector(int index, bool rowcol, bool posneg, int[] vector)
+        {
             if (rowcol == Constants.ROW)
             {
                 if (posneg == Constants.POSDIR) // RIGHT
                 {
-                    for (int j = 0; j < boardSize; j++)
+                    for (int i = 0; i < boardSize; i++)
                     {
-                        vector[j] = boardTiles[j, index];
+                        vector[boardSize-i-1] = boardTiles[index, i];
                     }
                 }
                 else if (posneg == Constants.NEGDIR) // LEFT
                 {
-                    for (int i = boardSize-1; i > 0; i--)
+                    for (int i = boardSize-1; i >= 0; i--)
                     {
-                        vector[i] = boardTiles[i, index];
+                        vector[i] = boardTiles[index, i];
                     }
                 }
             }
@@ -96,12 +148,11 @@ namespace Threes
             {
                 if (posneg == Constants.POSDIR) // DOWN
                     for (int i = 0; i < boardSize; i++)
-                        vector[i] = boardTiles[index, i];
+                        vector[boardSize-1-i] = boardTiles[i, index];
                 else if (posneg == Constants.NEGDIR) // UP
-                    for (int i = boardSize-1; i > 0; i--)
-                        vector[i] = boardTiles[index, i];
+                    for (int i = boardSize-1; i >= 0; i--)
+                        vector[i] = boardTiles[i, index];
             }
-            return vector;
         }
         private void WriteVector(int index, bool rowcol, bool posneg, int[] vector)
         {
@@ -109,45 +160,53 @@ namespace Threes
             {
                 if (posneg == Constants.POSDIR) // RIGHT
                     for (int i = 0; i < boardSize; i++)
-                        boardTiles[index, i] = vector[i];
+                        boardTiles[index, i] = vector[boardSize-1-i];
                 else if (posneg == Constants.NEGDIR) // LEFT
-                    for (int i = boardSize-1; i > 0; i--)
+                    for (int i = boardSize-1; i >= 0; i--)
                         boardTiles[index, i] = vector[i];
             }
             else if (rowcol == Constants.COL)
             {
                 if (posneg == Constants.POSDIR) // DOWN
                     for (int i = 0; i < boardSize; i++)
-                        boardTiles[index, i] = vector[i];
+                        boardTiles[i, index] = vector[boardSize-1-i];
                 else if (posneg == Constants.NEGDIR) // UP
-                    for (int i = boardSize-1; i > 0; i--)
-                        boardTiles[index, i] = vector[i];
+                    for (int i = boardSize-1; i >= 0; i--)
+                        boardTiles[i, index] = vector[i];
             }
         }
-        private int[] Merge(int[] vector)
+        private bool Merge(int[] vector)
         {
             //todo
             //bool[] transition = new bool[boardSize - 1]; // 0th index specifies transition between 0th and 1st tiles etc.
-            bool mergeMade = false;
+            bool moveMade = false;
             for (int i = 0; i < boardSize - 1; i++)
             {
-                if (!mergeMade)
+                if (!moveMade)
                 {
                     if (CanMerge(vector[i], vector[i + 1]))
                     {
                         //transition[i] = true; // merge made between ith and (i+1)th tiles
                         vector[i] += vector[i + 1];
-                        mergeMade = true;
+                        vector[i + 1] = 0;
+                        moveMade = true;
+                    }
+                    else if (vector[i] == 0)
+                    {
+                        vector[i] = vector[i + 1];
+                        if (vector[i + 1] != 0) moveMade = true; // if block is moved along, move was made
+                        vector[i + 1] = 0;
                     }
                 }
                 else // merge has been made, move all remaining blocks along
                     vector[i] = vector[i + 1];
 
             }
-            if (mergeMade)
+            if (moveMade)
                 vector[boardSize - 1] = 0; // set last block in row/col to 0
-            return vector;
+            return moveMade;
         }
+
         private bool CanMerge(int i, int j)
         {
             if ((i == 1 && j == 2) || (i == 2) && (j == 1)) // conditions for merging 1 + 2
@@ -182,5 +241,15 @@ namespace Threes
 
             return tempBoard;
         }
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(name));
+            }
+        }
+
     }
 }

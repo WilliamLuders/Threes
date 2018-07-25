@@ -38,28 +38,28 @@ namespace Threes
             //Start.Visibility = Visibility.Collapsed;
             MyCanvas.Visibility = Visibility.Visible;
             game = new GameState();
-            view = new GameView(MyCanvas);
+            view = new GameView(MyCanvas, game);
 
-            label1.Text = "test";
-            
+            label1.Text = view.UpdateView();
+
         }
 
         public int Score() => game.Score;
 
         private void Button_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            label1.Text = "Button pressed";
+            //label1.Text = "Button pressed";
             if (game != null)
             {
                 switch (e.Key)
                 {
-                    case VirtualKey.W: game.MoveTiles((int)Constants.DIRS.UP); break;
-                    case VirtualKey.Down: game.MoveTiles((int)Constants.DIRS.DOWN); break;
-                    case VirtualKey.Left: game.MoveTiles((int)Constants.DIRS.LEFT); break;
-                    case VirtualKey.Right: game.MoveTiles((int)Constants.DIRS.RIGHT); break;
+                    case VirtualKey.Up: if(game.MoveTiles((int)Constants.DIRS.UP)) game.SpawnTile((int)Constants.DIRS.UP); break;
+                    case VirtualKey.Down: if (game.MoveTiles((int)Constants.DIRS.DOWN)) game.SpawnTile((int)Constants.DIRS.DOWN); break;
+                    case VirtualKey.Left: if (game.MoveTiles((int)Constants.DIRS.LEFT)) game.SpawnTile((int)Constants.DIRS.LEFT); break;
+                    case VirtualKey.Right: if (game.MoveTiles((int)Constants.DIRS.RIGHT)) game.SpawnTile((int)Constants.DIRS.RIGHT); break;
                 }
             }
-            view.UpdateView();
+            label1.Text = view.UpdateView();
         }
     }
 }

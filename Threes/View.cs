@@ -1,21 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.UI.Xaml.Controls;
+﻿using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
+using System.ComponentModel;
 
 namespace Threes
 {
-    public class GameView
+    public class GameView : INotifyPropertyChanged
     {
-        Canvas myCanvas;
-        Rectangle rectangle1;
-        public GameView(Canvas canvas)
+
+
+        private Canvas myCanvas;
+        private GameState myGame;
+        private Rectangle rectangle1;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private const int boardSize = Constants.boardSize;
+        int[,] board;
+        private string viewString;
+
+        public GameView(Canvas canvas, GameState game)
         {
             myCanvas = canvas;
+            myGame = game;
+            board = new int[boardSize, boardSize];
+
+            //testing
             rectangle1 = new Rectangle
             {
                 Fill = new SolidColorBrush(Windows.UI.Colors.Blue),
@@ -29,9 +38,57 @@ namespace Threes
 
             myCanvas.Children.Add(rectangle1);
         }
-        public void UpdateView()
+
+        /*public string ViewString {
+            get
+            {
+                string viewStringBuilder = "";
+                board = myGame.BoardTiles; // I think = is overridden in this case...?
+                for (int i = 0; i < boardSize; i++)
+                {
+                    for (int j = 0; j < boardSize; j++)
+                    {
+                        viewStringBuilder += board[i, j] + " ";
+                    }
+                    viewStringBuilder += "\n";
+                }
+
+                viewString = viewStringBuilder;
+                return viewString;
+            }
+            set
+            {
+                viewString = value;
+                OnPropertyChanged("ViewString");
+            }
+        }*/
+
+        public string UpdateView()
         {
+            string viewStringBuilder = "";
+            board = myGame.BoardTiles; // I think = is overridden in this case...?
+            for (int i=0; i<boardSize; i++)
+            {
+                for (int j = 0; j < boardSize; j++)
+                {
+                    viewStringBuilder += board[i, j] + "   ";
+                }
+                viewStringBuilder += "\n\n";
+            }
+            
+            //testing
             rectangle1.RadiusX = 10;
+
+            return viewStringBuilder;
+        }
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(name));
+            }
         }
     }
 }
