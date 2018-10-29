@@ -104,6 +104,8 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShortStack.cs" />
+    <Compile Include="Tile.cs" />
+    <Compile Include="View.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
