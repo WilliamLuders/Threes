@@ -4,33 +4,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using System.Collections;
 
 namespace Threes
 {
     public class GameState : INotifyPropertyChanged
     {
         //Fields
+        private const int boardSize = Constants.boardSize; // IDEA: dynamic array size depending on progression through single game/achievements
         private int score;
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        //public int size; // IDEA: dynamic array size depending on progression through single game/achievements
-        //private Board gameBoard;
-        //Fields
-        private const int boardSize = Constants.boardSize;
+        public int Score { get; }
+        private bool gameOver;
+        public bool GameOver { get; set; }
         private int[,] boardTiles = new int[boardSize, boardSize];
-
-        public int[,] BoardTiles {
+        public int[,] BoardTiles
+        {
             get => boardTiles;
         }
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public GameState()
         {
             score = 0;
             boardTiles = InitializeBoard();
+            gameOver = false;
             
         }
-        public int Score { get => score; }
-        //public int[,] GetBoard() => boardTiles;
 
         public bool MoveTiles(int dir)
         {
@@ -92,38 +91,57 @@ namespace Threes
             int i;
             Random rndGen = new Random();
 
+            int newTileVal = rndGen.Next(1, 4);
             switch (dir)
             {
+                
                 case (int)Constants.DIRS.UP:
                     // keep generating coordinates until we find a blank square along specific edge
                     do
                     {
                         i = rndGen.Next(0, boardSize);
                     } while (boardTiles[boardSize - 1, i] != 0); // pick empty square along bottom
-                    boardTiles[boardSize - 1, i] = rndGen.Next(1, 4);
+                    boardTiles[boardSize - 1, i] = newTileVal;
                     break;
                 case (int)Constants.DIRS.DOWN:
                     do
                     {
                         i = rndGen.Next(0, boardSize);
                     } while (boardTiles[0, i] != 0); // pick empty square along top
-                    boardTiles[0, i] = rndGen.Next(1, 4);
+                    boardTiles[0, i] = newTileVal;
                     break;
                 case (int)Constants.DIRS.LEFT:
                     do
                     {
                         i = rndGen.Next(0, boardSize);
                     } while (boardTiles[i, boardSize - 1] != 0); // pick empty square along right
-                    boardTiles[i, boardSize - 1] = rndGen.Next(1, 4);
+                    boardTiles[i, boardSize - 1] = newTileVal;
                     break;
                 case (int)Constants.DIRS.RIGHT:
                     do
                     {
                         i = rndGen.Next(0, boardSize);
                     } while (boardTiles[i, 0] != 0); // pick empty square along left
-                    boardTiles[i, 0] = rndGen.Next(1, 4);
+                    boardTiles[i, 0] = newTileVal;
                     break;
             }
+        }
+        public bool MoveAvailable()
+        {
+            foreach (int tile in boardTiles)
+            {
+                if (tile == 0) return true;
+            }
+
+            for (int i=0; i<boardSize; i++)
+            {
+                for (int j = 0; j< boardSize-1; j++)
+                {
+                    if (CanMerge(boardTiles[i, j], boardTiles[i, j + 1])) return true;
+                    if (CanMerge(boardTiles[j, i], boardTiles[j + 1, i])) return true;
+                }
+            }
+            return false;
         }
         private void ReadVector(int index, bool rowcol, bool posneg, int[] vector)
         {

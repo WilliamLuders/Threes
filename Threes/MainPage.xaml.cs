@@ -35,13 +35,21 @@ namespace Threes
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            //Start.Visibility = Visibility.Collapsed;
+            Start.Content = "Restart";
             MyCanvas.Visibility = Visibility.Visible;
-            game = new GameState();
-            view = new GameView(MyCanvas, game);
-
-            label1.Text = view.UpdateView();
-
+            while (MyCanvas.Children.Count != 0)
+                MyCanvas.Children.RemoveAt(0);
+            //try // if game object have not been created
+            //{
+            //    if (game.Equals(null))
+            //        game = new GameState();
+            //    if (view.Equals(null))
+            //        view = new GameView(ref MyCanvas, game);
+            //}
+            
+                game = new GameState();
+                view = new GameView(ref MyCanvas, game);
+            GC.Collect(); // remove old game objects if we restarted
         }
 
         public int Score() => game.Score;
@@ -49,17 +57,37 @@ namespace Threes
         private void Button_KeyDown(object sender, KeyRoutedEventArgs e)
         {
             //label1.Text = "Button pressed";
-            if (game != null)
+
+
+            if (game != null && !game.GameOver)
             {
+                int dir = 0;
+                
                 switch (e.Key)
                 {
-                    case VirtualKey.Up: if(game.MoveTiles((int)Constants.DIRS.UP)) game.SpawnTile((int)Constants.DIRS.UP); break;
-                    case VirtualKey.Down: if (game.MoveTiles((int)Constants.DIRS.DOWN)) game.SpawnTile((int)Constants.DIRS.DOWN); break;
-                    case VirtualKey.Left: if (game.MoveTiles((int)Constants.DIRS.LEFT)) game.SpawnTile((int)Constants.DIRS.LEFT); break;
-                    case VirtualKey.Right: if (game.MoveTiles((int)Constants.DIRS.RIGHT)) game.SpawnTile((int)Constants.DIRS.RIGHT); break;
+                    case VirtualKey.Up:     dir = (int)Constants.DIRS.UP;       break;
+                    case VirtualKey.Down:   dir = (int)Constants.DIRS.DOWN;     break;
+                    case VirtualKey.Left:   dir = (int)Constants.DIRS.LEFT;     break;
+                    case VirtualKey.Right:  dir = (int)Constants.DIRS.RIGHT;    break;
                 }
+                
+                // move tiles based on button pressed. If tiles merged during move, spawn a new tile on empty edge caused by move 
+                if (game.MoveTiles(dir))
+                {
+                    game.SpawnTile(dir);
+                    if (!game.MoveAvailable())
+                    {
+                        view.GameOver();
+                    }
+                }
+                    
             }
-            label1.Text = view.UpdateView();
+            view.UpdateView();
+        }
+
+        private void Button_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -2,6 +2,9 @@
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 using System.ComponentModel;
+using System.Collections.Generic;
+using Windows.UI;
+using System;
 
 namespace Threes
 {
@@ -9,77 +12,73 @@ namespace Threes
     {
 
 
-        private Canvas myCanvas;
+        //private Canvas canvas;
         private GameState myGame;
-        private Rectangle rectangle1;
+        private Canvas myCanvas;
         public event PropertyChangedEventHandler PropertyChanged;
 
         private const int boardSize = Constants.boardSize;
-        int[,] board;
-        private string viewString;
+        Button[,] boardTiles; // array of buttons
+                              //private string viewString;
 
-        public GameView(Canvas canvas, GameState game)
+        Dictionary<int, SolidColorBrush> colorScheme = new Dictionary<int, SolidColorBrush>(); // different color for each tile value
+        
+        
+
+        public GameView(ref Canvas canvas, GameState game)
         {
-            myCanvas = canvas;
             myGame = game;
-            board = new int[boardSize, boardSize];
+            myCanvas = canvas;
+            boardTiles = new Button[boardSize, boardSize];
+            colorScheme.Add(0, new SolidColorBrush(Windows.UI.Colors.White));
+            colorScheme.Add(1, new SolidColorBrush(Windows.UI.Colors.LightBlue));
+            colorScheme.Add(2, new SolidColorBrush(Windows.UI.Colors.LightSalmon));
+            colorScheme.Add(3, new SolidColorBrush(Windows.UI.Colors.LightGreen));
+            colorScheme.Add(6, new SolidColorBrush(Windows.UI.Colors.LightGreen));
 
-            //testing
-            rectangle1 = new Rectangle
+            var testButton = new Button();
+
+            for (int i = 0; i<boardSize; i++)
             {
-                Fill = new SolidColorBrush(Windows.UI.Colors.Blue),
-                Width = 200,
-                Height = 100,
-                Stroke = new SolidColorBrush(Windows.UI.Colors.Black),
-                StrokeThickness = 3,
-                RadiusX = 50,
-                RadiusY = 10
-            };
-
-            myCanvas.Children.Add(rectangle1);
+                for (int j = 0; j<boardSize; j++)
+                {
+                    boardTiles[i, j] = new Button
+                    {
+                        Foreground = new SolidColorBrush(Windows.UI.Colors.White),
+                        Height = 45,
+                        Width = 45,
+                    };
+                    myCanvas.Children.Add(boardTiles[i, j]);
+                    Canvas.SetLeft(boardTiles[i, j], 50 * j);
+                    Canvas.SetTop(boardTiles[i, j], 50 * i);
+                }
+            }
+            UpdateView(); // update tiles with values and corresponding colours
         }
 
-        /*public string ViewString {
-            get
-            {
-                string viewStringBuilder = "";
-                board = myGame.BoardTiles; // I think = is overridden in this case...?
-                for (int i = 0; i < boardSize; i++)
-                {
-                    for (int j = 0; j < boardSize; j++)
-                    {
-                        viewStringBuilder += board[i, j] + " ";
-                    }
-                    viewStringBuilder += "\n";
-                }
-
-                viewString = viewStringBuilder;
-                return viewString;
-            }
-            set
-            {
-                viewString = value;
-                OnPropertyChanged("ViewString");
-            }
-        }*/
-
-        public string UpdateView()
+        public void UpdateView()
         {
-            string viewStringBuilder = "";
-            board = myGame.BoardTiles; // I think = is overridden in this case...?
-            for (int i=0; i<boardSize; i++)
+            for (int i = 0; i < boardSize; i++)
             {
                 for (int j = 0; j < boardSize; j++)
                 {
-                    viewStringBuilder += board[i, j] + "   ";
-                }
-                viewStringBuilder += "\n\n";
-            }
-            
-            //testing
-            rectangle1.RadiusX = 10;
+                    var tile = (Button) myCanvas.Children[myCanvas.Children.IndexOf(boardTiles[i, j])]; //find tile on Canvas
 
-            return viewStringBuilder;
+                    tile.Content = myGame.BoardTiles[i, j];
+                    if (tile.Content.Equals(0))
+                        tile.Content = ""; // don't write 0 on tiles, just make them blank
+                    
+                        int colorGen = myGame.BoardTiles[i, j]; // use tile value to decide colour
+                        byte B = (byte)(200 * (1 - Math.Exp(-colorGen/2)));
+                        byte G = (byte)(255 * (Math.Exp(-colorGen/2)));
+                        tile.Background = new SolidColorBrush(Color.FromArgb((byte)220, 0, G, B)); // still experimenting with colour generation
+                }
+            }
+        }
+
+        public void GameOver()
+        {
+            //To do
         }
 
         protected void OnPropertyChanged(string name)
